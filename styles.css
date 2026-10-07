@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Modern Fantasy Premier League insights dashboard with player data, team builder, fixture difficulty ratings and xP model."
+    />
+    <title>FPL Projections</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Fantasy Premier League</p>
+          <h1>FPL Projections</h1>
+        </div>
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span id="liveStatus">Live updates</span>
+        </div>
+      </header>
+
+      <main class="page">
+        <section class="hero panel">
+          <div class="hero-copy">
+            <p class="section-tag">FPL Insights</p>
+            <h2>Build smarter teams with performance, fixtures and xP.</h2>
+            <p>
+              Track premium assets, next fixtures and projected points to create a
+              balanced squad before each deadline.
+            </p>
+          </div>
+          <div class="hero-metrics">
+            <div class="metric-card">
+              <span>Gameweek</span>
+              <strong id="gameweekValue">13</strong>
+            </div>
+            <div class="metric-card">
+              <span>Average xP</span>
+              <strong id="avgXpValue">0.0</strong>
+            </div>
+            <div class="metric-card">
+              <span>Best pick</span>
+              <strong id="bestPickValue">—</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="summary-grid">
+          <article class="panel stat-card">
+            <span class="stat-label">Total players</span>
+            <strong id="totalPlayers">0</strong>
+          </article>
+          <article class="panel stat-card">
+            <span class="stat-label">Best value</span>
+            <strong id="bestValue">—</strong>
+          </article>
+          <article class="panel stat-card">
+            <span class="stat-label">High xP</span>
+            <strong id="highXp">—</strong>
+          </article>
+          <article class="panel stat-card">
+            <span class="stat-label">Last update</span>
+            <strong id="lastUpdate">—</strong>
+          </article>
+        </section>
+
+        <section class="two-column-layout">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Player database</h3>
+              <div class="filters">
+                <select id="positionFilter">
+                  <option value="all">All positions</option>
+                  <option value="GKP">Goalkeepers</option>
+                  <option value="DEF">Defenders</option>
+                  <option value="MID">Midfielders</option>
+                  <option value="FWD">Forwards</option>
+                </select>
+                <input id="searchInput" type="search" placeholder="Search player" />
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>Pos</th>
+                    <th>Cost</th>
+                    <th>Pts</th>
+                    <th>xP</th>
+                    <th>Form</th>
+                    <th>Team</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="playerTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <aside class="panel team-panel">
+            <div class="panel-header compact">
+              <h3>Team builder</h3>
+              <button id="resetTeamButton" class="ghost-button">Reset</button>
+            </div>
+            <div class="team-summary">
+              <div>
+                <span>Selected</span>
+                <strong id="selectedCount">0/15</strong>
+              </div>
+              <div>
+                <span>Budget</span>
+                <strong id="budgetValue">£100.0</strong>
+              </div>
+            </div>
+            <div id="teamBuilderList" class="team-list"></div>
+          </aside>
+        </section>
+
+        <section class="bottom-grid">
+          <div class="panel">
+            <div class="panel-header compact">
+              <h3>Fixture difficulty</h3>
+            </div>
+            <div id="fixtureList" class="fixture-list"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header compact">
+              <h3>xP model</h3>
+            </div>
+            <div id="xpList" class="xp-list"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
