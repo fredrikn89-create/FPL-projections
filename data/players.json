@@ -47,9 +47,7 @@ function loadFallbackData() {
       { team: "Spurs", next: "vs MUN", difficulty: 4 },
       { team: "Chelsea", next: "vs ARS", difficulty: 5 },
       { team: "Bournemouth", next: "vs EVE", difficulty: 3 },
-      { team: "Brentford", next: "vs NFO", difficulty: 4 },
-      { team: "Villa", next: "vs LIV", difficulty: 5 },
-      { team: "Everton", next: "vs BOU", difficulty: 3 }
+      { team: "Brentford", next: "vs NFO", difficulty: 4 }
     ],
     updatedAt: new Date().toISOString()
   };
@@ -143,12 +141,6 @@ function togglePlayer(playerId) {
     state.selected = [...selected, playerId];
   }
 
-  saveTeam();
-  render();
-}
-
-function resetTeam() {
-  state.selected = [];
   saveTeam();
   render();
 }

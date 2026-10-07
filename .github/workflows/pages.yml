@@ -1,52 +1,10 @@
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-  schedule:
-    - cron: "0 6 * * *"
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Refresh data
-        run: python3 scripts/update_fpl_data.py
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+[
+  { "team": "Arsenal", "next": "vs CHE", "difficulty": 2 },
+  { "team": "Liverpool", "next": "vs AVL", "difficulty": 2 },
+  { "team": "Man City", "next": "vs BHA", "difficulty": 3 },
+  { "team": "Newcastle", "next": "vs CRY", "difficulty": 2 },
+  { "team": "Spurs", "next": "vs MUN", "difficulty": 4 },
+  { "team": "Chelsea", "next": "vs ARS", "difficulty": 5 },
+  { "team": "Bournemouth", "next": "vs EVE", "difficulty": 3 },
+  { "team": "Brentford", "next": "vs NFO", "difficulty": 4 }
+]
