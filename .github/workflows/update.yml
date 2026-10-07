@@ -1,1 +1,17 @@
+name: Update FPL Projections
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test
+        run: |
+          echo "FPL Projections workflow fungerer!"
 
