@@ -1,0 +1,318 @@
+const state = {
+  players: [],
+  fixtures: [],
+  selected: [],
+  searchTerm: "",
+  position: "all"
+};
+
+const els = {
+  gameweekValue: document.querySelector("#gameweekValue"),
+  avgXpValue: document.querySelector("#avgXpValue"),
+  bestPickValue: document.querySelector("#bestPickValue"),
+  totalPlayers: document.querySelector("#totalPlayers"),
+  bestValue: document.querySelector("#bestValue"),
+  highXp: document.querySelector("#highXp"),
+  lastUpdate: document.querySelector("#lastUpdate"),
+  playerTableBody: document.querySelector("#playerTableBody"),
+  teamBuilderList: document.querySelector("#teamBuilderList"),
+  selectedCount: document.querySelector("#selectedCount"),
+  budgetValue: document.querySelector("#budgetValue"),
+  fixtureList: document.querySelector("#fixtureList"),
+  xpList: document.querySelector("#xpList"),
+  positionFilter: document.querySelector("#positionFilter"),
+  searchInput: document.querySelector("#searchInput"),
+  resetTeamButton: document.querySelector("#resetTeamButton")
+};
+
+function loadFallbackData() {
+  return {
+    players: [
+      { id: 1, name: "Erling Haaland", team: "Man City", position: "FWD", cost: 12.5, selected_by_percent: 60.1, points: 140, minutes: 1800, xg: 1.21, xa: 0.18, xP: 1.39, form: 8.8 },
+      { id: 2, name: "Bukayo Saka", team: "Arsenal", position: "MID", cost: 8.9, selected_by_percent: 37.9, points: 128, minutes: 1680, xg: 0.57, xa: 0.42, xP: 0.99, form: 7.9 },
+      { id: 3, name: "Mohamed Salah", team: "Liverpool", position: "MID", cost: 12.8, selected_by_percent: 51.4, points: 133, minutes: 1710, xg: 0.68, xa: 0.52, xP: 1.2, form: 8.2 },
+      { id: 4, name: "Son Heung-min", team: "Spurs", position: "MID", cost: 9.7, selected_by_percent: 28.2, points: 125, minutes: 1650, xg: 0.61, xa: 0.32, xP: 0.93, form: 7.4 },
+      { id: 5, name: "Alexander Isak", team: "Newcastle", position: "FWD", cost: 8.2, selected_by_percent: 22.1, points: 116, minutes: 1600, xg: 0.66, xa: 0.18, xP: 0.84, form: 7.1 },
+      { id: 6, name: "Rodri", team: "Man City", position: "MID", cost: 5.6, selected_by_percent: 11.3, points: 110, minutes: 1700, xg: 0.24, xa: 0.38, xP: 0.62, form: 6.9 },
+      { id: 7, name: "William Saliba", team: "Arsenal", position: "DEF", cost: 5.6, selected_by_percent: 17.9, points: 98, minutes: 1800, xg: 0.08, xa: 0.02, xP: 0.1, form: 6.2 },
+      { id: 8, name: "Kieran Trippier", team: "Newcastle", position: "DEF", cost: 6.2, selected_by_percent: 10.2, points: 94, minutes: 1760, xg: 0.09, xa: 0.18, xP: 0.27, form: 6.1 },
+      { id: 9, name: "Alisson", team: "Liverpool", position: "GKP", cost: 5.5, selected_by_percent: 14.5, points: 106, minutes: 1710, xg: 0.01, xa: 0.02, xP: 0.03, form: 6.4 },
+      { id: 10, name: "Pedro Neto", team: "Chelsea", position: "MID", cost: 6.7, selected_by_percent: 10.4, points: 88, minutes: 1480, xg: 0.32, xa: 0.25, xP: 0.57, form: 5.9 }
+    ],
+    fixtures: [
+      { team: "Arsenal", next: "vs CHE", difficulty: 2 },
+      { team: "Liverpool", next: "vs AVL", difficulty: 2 },
+      { team: "Man City", next: "vs BHA", difficulty: 3 },
+      { team: "Newcastle", next: "vs CRY", difficulty: 2 },
+      { team: "Spurs", next: "vs MUN", difficulty: 4 },
+      { team: "Chelsea", next: "vs ARS", difficulty: 5 },
+      { team: "Bournemouth", next: "vs EVE", difficulty: 3 },
+      { team: "Brentford", next: "vs NFO", difficulty: 4 },
+      { team: "Villa", next: "vs LIV", difficulty: 5 },
+      { team: "Everton", next: "vs BOU", difficulty: 3 }
+    ],
+    updatedAt: new Date().toISOString()
+  };
+}
+
+async function fetchData() {
+  try {
+    const [playersRes, fixturesRes] = await Promise.all([
+      fetch("data/players.json"),
+      fetch("data/fixtures.json")
+    ]);
+
+    if (!playersRes.ok || !fixturesRes.ok) {
+      throw new Error("Missing dataset");
+    }
+
+    const players = await playersRes.json();
+    const fixtures = await fixturesRes.json();
+
+    return { players, fixtures, updatedAt: new Date().toISOString() };
+  } catch (error) {
+    return loadFallbackData();
+  }
+}
+
+function formatMoney(value) {
+  return `£${value.toFixed(1)}`;
+}
+
+function formatDifficulty(level) {
+  const labels = {
+    1: "Easy",
+    2: "Fair",
+    3: "Medium",
+    4: "Hard",
+    5: "Very hard"
+  };
+  return labels[level] || "Medium";
+}
+
+function getDiffClass(level) {
+  return `diff-${level}`;
+}
+
+function loadSavedTeam() {
+  try {
+    const raw = localStorage.getItem("fpl-team");
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveTeam() {
+  localStorage.setItem("fpl-team", JSON.stringify(state.selected));
+}
+
+function computeBudget() {
+  const used = state.selected.reduce((sum, playerId) => {
+    const player = state.players.find((entry) => entry.id === playerId);
+    return sum + (player ? player.cost : 0);
+  }, 0);
+
+  return 100 - used;
+}
+
+function filterPlayers() {
+  return state.players.filter((player) => {
+    const matchesPosition = state.position === "all" || player.position === state.position;
+    const matchesSearch = !state.searchTerm || player.name.toLowerCase().includes(state.searchTerm.toLowerCase());
+    return matchesPosition && matchesSearch;
+  });
+}
+
+function togglePlayer(playerId) {
+  const selected = [...state.selected];
+  const player = state.players.find((entry) => entry.id === playerId);
+  if (!player) return;
+
+  const exists = selected.includes(playerId);
+  if (exists) {
+    state.selected = selected.filter((id) => id !== playerId);
+  } else {
+    if (state.selected.length >= 15) return;
+    const currentCost = state.selected.reduce((sum, id) => {
+      const p = state.players.find((entry) => entry.id === id);
+      return sum + (p ? p.cost : 0);
+    }, 0);
+
+    if (currentCost + player.cost > 100) return;
+    state.selected = [...selected, playerId];
+  }
+
+  saveTeam();
+  render();
+}
+
+function resetTeam() {
+  state.selected = [];
+  saveTeam();
+  render();
+}
+
+function renderPlayerTable() {
+  const filtered = filterPlayers();
+  els.playerTableBody.innerHTML = filtered
+    .map((player) => {
+      const isSelected = state.selected.includes(player.id);
+      return `
+        <tr>
+          <td>
+            <div class="player-name">
+              <strong>${player.name}</strong>
+              <span>${player.team}</span>
+            </div>
+          </td>
+          <td><span class="badge">${player.position}</span></td>
+          <td>${formatMoney(player.cost)}</td>
+          <td>${player.points}</td>
+          <td>${player.xP.toFixed(2)}</td>
+          <td>${player.form.toFixed(1)}</td>
+          <td>${player.team}</td>
+          <td>
+            <button class="action-button" data-player-id="${player.id}">
+              ${isSelected ? "Remove" : "Add"}
+            </button>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  document.querySelectorAll(".action-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      togglePlayer(Number(button.dataset.playerId));
+    });
+  });
+}
+
+function renderTeamBuilder() {
+  const selectedPlayers = state.selected
+    .map((id) => state.players.find((player) => player.id === id))
+    .filter(Boolean);
+
+  els.selectedCount.textContent = `${selectedPlayers.length}/15`;
+  els.budgetValue.textContent = formatMoney(computeBudget());
+
+  if (!selectedPlayers.length) {
+    els.teamBuilderList.innerHTML = `<div class="team-row"><div class="team-player"><strong>No players selected</strong><span>Start building your squad</span></div></div>`;
+    return;
+  }
+
+  els.teamBuilderList.innerHTML = selectedPlayers
+    .map((player) => `
+      <div class="team-row">
+        <div class="team-player">
+          <strong>${player.name}</strong>
+          <span>${player.position} • ${player.team}</span>
+        </div>
+        <button class="ghost-button" data-remove-id="${player.id}">Remove</button>
+      </div>
+    `)
+    .join("");
+
+  document.querySelectorAll("[data-remove-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      togglePlayer(Number(button.dataset.removeId));
+    });
+  });
+}
+
+function renderFixtures() {
+  els.fixtureList.innerHTML = state.fixtures
+    .slice(0, 8)
+    .map(
+      (item) => `
+        <div class="fixture-item">
+          <div class="fixture-meta">
+            <strong>${item.team}</strong>
+            <span>Next: ${item.next}</span>
+          </div>
+          <span class="difficulty-pill ${getDiffClass(item.difficulty)}">${formatDifficulty(item.difficulty)}</span>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function renderXpModel() {
+  const ranked = [...state.players]
+    .sort((a, b) => b.xP - a.xP)
+    .slice(0, 5);
+
+  els.avgXpValue.textContent = (state.players.reduce((sum, p) => sum + p.xP, 0) / Math.max(1, state.players.length)).toFixed(2);
+  const bestPlayer = ranked[0];
+  els.bestPickValue.textContent = bestPlayer ? bestPlayer.name : "—";
+
+  els.xpList.innerHTML = ranked
+    .map(
+      (player) => `
+        <div class="xp-item">
+          <div class="xp-meta">
+            <strong>${player.name}</strong>
+            <span>${player.position} • ${player.team}</span>
+          </div>
+          <span class="xp-score">${player.xP.toFixed(2)} xP</span>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function renderSummary() {
+  const totalPlayers = state.players.length;
+  els.totalPlayers.textContent = totalPlayers;
+
+  const bestValuePlayer = [...state.players].sort((a, b) => {
+    const valueA = a.points / a.cost;
+    const valueB = b.points / b.cost;
+    return valueB - valueA;
+  })[0];
+
+  els.bestValue.textContent = bestValuePlayer ? `${bestValuePlayer.name}` : "—";
+
+  const highestXp = [...state.players].sort((a, b) => b.xP - a.xP)[0];
+  els.highXp.textContent = highestXp ? `${highestXp.name} ${highestXp.xP.toFixed(2)}` : "—";
+}
+
+function render() {
+  renderSummary();
+  renderFixtures();
+  renderPlayerTable();
+  renderTeamBuilder();
+  renderXpModel();
+}
+
+async function init() {
+  const dataset = await fetchData();
+  state.players = dataset.players;
+  state.fixtures = dataset.fixtures;
+  state.selected = loadSavedTeam();
+
+  const firstUpdated = new Date(dataset.updatedAt);
+  els.lastUpdate.textContent = firstUpdated.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  els.positionFilter.addEventListener("change", (event) => {
+    state.position = event.target.value;
+    renderPlayerTable();
+  });
+
+  els.searchInput.addEventListener("input", (event) => {
+    state.searchTerm = event.target.value.trim();
+    renderPlayerTable();
+  });
+
+  els.resetTeamButton.addEventListener("click", resetTeam);
+
+  render();
+}
+
+init();
